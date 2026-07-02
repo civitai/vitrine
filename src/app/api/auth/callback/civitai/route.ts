@@ -1,7 +1,9 @@
 import { exchangeCode, OAuthError } from '@civitai/app-sdk';
 import { type NextRequest, NextResponse } from 'next/server';
+import { recordEvent } from '@/lib/analytics.server';
 import { env, REDIRECT_URI } from '@/lib/env';
 import { consumeOAuthState, setSession } from '@/lib/session';
+import { getUserKey } from '@/lib/userKey';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -25,6 +27,17 @@ export async function GET(req: NextRequest) {
       codeVerifier: expected.verifier,
     });
     await setSession({ tokens });
+
+    // Best-effort: never let analytics block a successful login. userKey
+    // resolution hits Civitai's /me, so isolate it from the token-exchange
+    // error handling below (a tracking hiccup shouldn't read as an OAuth
+    // failure).
+    try {
+      const userKey = await getUserKey({ tokens });
+      await recordEvent({ userKey, event: 'login_succeeded' });
+    } catch {
+      // swallow — see comment above.
+    }
   } catch (err) {
     const msg =
       err instanceof OAuthError ? `token_exchange:${err.status}` : 'token_exchange_failed';

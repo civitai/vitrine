@@ -3,6 +3,8 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { track } from '@/lib/analytics';
 
 const CAMPAIGN_CAPS = ['12 social posts', '3 ad creatives', '1 hero reel'] as const;
 const PHOTOSHOOT_CAPS = ['studio', 'lifestyle', 'in-use', 'hero'] as const;
@@ -18,6 +20,12 @@ const PHOTOSHOOT_CAPS = ['studio', 'lifestyle', 'in-use', 'hero'] as const;
  */
 export function NextScreen() {
   const router = useRouter();
+
+  // The page-level server gate only renders this screen once `completedAt`
+  // is set, so reaching it client-side is itself the completion signal.
+  useEffect(() => {
+    track('onboarding_completed');
+  }, []);
 
   return (
     <section className="flex flex-col items-center gap-8 pt-4 text-center lg:gap-10 lg:pt-8">

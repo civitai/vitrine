@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, BuzzPill, Chip, cn, FieldLabel, Input, PageTransition, Spinner, Textarea } from '@/components/ui';
 import { GREEN_BUZZ_TOOLTIP } from '@/components/ui/BuzzPill';
+import { track } from '@/lib/analytics';
 import type { Asset } from '@/lib/assets';
 import type { Product } from '@/lib/catalog';
 import { buzzTopUpUrl } from '@/lib/links';
@@ -414,6 +415,7 @@ export function PhotoshootWizard({
         goStep('review');
         return;
       }
+      track('photoshoot_cook_submitted', { template: Array.from(templateIds).join(',') });
       router.replace(`/photoshoot/${id}`);
       router.refresh();
     } catch (err) {

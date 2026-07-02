@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Button, cn, Input, Textarea } from '@/components/ui';
+import { track } from '@/lib/analytics';
 import { pickContrast } from '@/lib/color';
 import type { OnboardingPayload, ScrapedSite } from '@/lib/onboarding';
 import { isBrandDnaSufficient } from '@/lib/onboardingValidation';
@@ -41,6 +42,7 @@ export function DnaStep({ payload }: Props) {
   const [logoUrl, setLogoUrl] = useState<string | null>(payload.logoUrl ?? scrape?.logoUrl ?? null);
   const [logoName, setLogoName] = useState<string | null>(payload.logoName ?? null);
   const logoUpload = useLogoUpload();
+  const brandDnaTrackedRef = useRef(false);
 
   async function handleLogoFile(file: File) {
     setLogoName(file.name);
@@ -97,7 +99,14 @@ export function DnaStep({ payload }: Props) {
           logoUrl,
           logoName,
         }),
-      }).catch(() => {});
+      })
+        .then((res) => {
+          if (res.ok && !brandDnaTrackedRef.current) {
+            brandDnaTrackedRef.current = true;
+            track('brand_dna_saved', { fonts: font ? 1 : 0, colors: colors.length });
+          }
+        })
+        .catch(() => {});
     }, 500);
     return () => {
       clearTimeout(t);

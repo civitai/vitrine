@@ -1,7 +1,11 @@
 # Local-dev infra for vitrine.
-# Boots Postgres + MinIO + Redis on localhost. Same SDKs talk to managed
+# Boots Postgres + MinIO + Redis + lgtm (Grafana/Loki/Tempo/Prometheus) +
+# Alloy (Faro/OTel ingest) on localhost. Same SDKs talk to managed
 # equivalents in prod (Vercel Postgres, Cloudflare R2, Upstash Redis) via
 # endpoint swap in .env — see docs/project-overview.md "Tech stack".
+#
+# Grafana UI: http://localhost:3001 — uncomment NEXT_PUBLIC_FARO_URL +
+# OTEL_EXPORTER_OTLP_ENDPOINT in .env to send telemetry.
 #
 # Usage:
 #   pnpm dev:up      # docker compose up -d
@@ -48,6 +52,38 @@ services:
     image: redis:7-alpine
     ports: ['6380:6379']
 
+  # --- Observability (local Grafana stack for Faro + OTel) ---
+  # Grafana UI at http://localhost:3001 (admin/admin). All-in-one
+  # Grafana+Loki+Tempo+Prometheus with auto-provisioned datasources.
+  lgtm:
+    image: grafana/otel-lgtm:0.28.0   # pin; bump deliberately
+    ports: ['3001:3000']              # Grafana UI (avoid :3000/:3333 clashes)
+    volumes:
+      - lgtmdata:/data                # confirmed against image README (Persist data section)
+    healthcheck:
+      test: ['CMD', 'curl', '-sf', 'http://localhost:3000/api/health']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Single ingest: Faro receiver (browser) + OTLP receiver (dev server),
+  # forwarding logs->Loki, traces->Tempo inside the lgtm container.
+  alloy:
+    image: grafana/alloy:v1.17.1      # faro.receiver is GA in this tag — no stability flag needed
+    depends_on: [lgtm]
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    ports:
+      - '12347:12347'   # Faro receiver /collect
+      - '4318:4318'     # OTLP HTTP
+      - '4317:4317'     # OTLP gRPC
+      - '12345:12345'   # Alloy debug UI
+    volumes:
+      - ./docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
+
 volumes:
   pgdata:
   miniodata:
+  lgtmdata:

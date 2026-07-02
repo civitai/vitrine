@@ -3,6 +3,7 @@
 import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui';
+import { track } from '@/lib/analytics';
 
 type Props = { campaignId: string; disabled?: boolean };
 
@@ -31,6 +32,7 @@ export function ExportCampaignButton({ campaignId, disabled }: Props) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      track('campaign_exported', { format: 'zip' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'export failed');
     } finally {

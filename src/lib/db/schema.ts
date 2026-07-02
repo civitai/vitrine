@@ -125,6 +125,32 @@ export const products = pgTable(
   }),
 );
 
+/**
+ * Product-analytics event stream (durable PostHog replacement). The realtime
+ * copy goes to Faro/Loki via `track()`; this table is the exact, queryable
+ * store for SQL funnels/retention. `event` is free-text (typed at the
+ * `track()` boundary) so new events never need a migration.
+ */
+export const analyticsEvents = pgTable(
+  'analytics_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userKey: text('user_key')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    event: text('event').notNull(),
+    props: jsonb('props').default(sql`'{}'::jsonb`).notNull(),
+    sessionId: text('session_id'),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index('analytics_events_user_idx').on(t.userKey),
+    eventIdx: index('analytics_events_event_idx').on(t.event),
+    occurredIdx: index('analytics_events_occurred_idx').on(t.occurredAt),
+  }),
+);
+
 export const assets = pgTable(
   'assets',
   {
@@ -413,3 +439,5 @@ export type NewBuzzEvent = typeof buzzEvents.$inferInsert;
 export type OnboardingState = typeof onboardingState.$inferSelect;
 export type TileVersion = typeof tileVersions.$inferSelect;
 export type NewTileVersion = typeof tileVersions.$inferInsert;
+export type AnalyticsEventRow = typeof analyticsEvents.$inferSelect;
+export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;

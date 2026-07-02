@@ -1,0 +1,60 @@
+// Local-dev ingest for vitrine observability.
+// Faro (browser) -> :12347/collect ; OTLP (dev server) -> :4317/:4318.
+// Logs/events -> Loki ; traces -> Tempo, both inside the otel-lgtm container.
+
+logging {
+	level  = "info"
+	format = "logfmt"
+}
+
+// --- Sinks (inside the otel-lgtm container, reachable as `lgtm:*`) ---
+loki.write "local" {
+	endpoint {
+		url = "http://lgtm:3100/loki/api/v1/push"
+	}
+}
+
+otelcol.exporter.otlp "tempo" {
+	client {
+		endpoint = "lgtm:4317"
+
+		tls {
+			insecure = true
+		}
+	}
+}
+
+otelcol.processor.batch "default" {
+	output {
+		traces = [otelcol.exporter.otlp.tempo.input]
+	}
+}
+
+// --- Backend: OTLP from the Next dev server (@vercel/otel) ---
+otelcol.receiver.otlp "backend" {
+	grpc {
+		endpoint = "0.0.0.0:4317"
+	}
+
+	http {
+		endpoint = "0.0.0.0:4318"
+	}
+
+	output {
+		traces = [otelcol.processor.batch.default.input]
+	}
+}
+
+// --- Frontend: Faro from the browser ---
+faro.receiver "frontend" {
+	server {
+		listen_address       = "0.0.0.0"
+		listen_port          = 12347
+		cors_allowed_origins = ["*"]
+	}
+
+	output {
+		logs   = [loki.write.local.receiver]
+		traces = [otelcol.processor.batch.default.input]
+	}
+}

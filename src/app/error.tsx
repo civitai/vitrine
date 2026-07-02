@@ -1,5 +1,6 @@
 'use client';
 
+import { faro } from '@grafana/faro-web-sdk';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
@@ -18,8 +19,13 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Replace with your reporting (Sentry, PostHog, etc).
-    console.error(error);
+    // Faro captures uncaught errors globally, but React swallows render errors
+    // in this boundary — forward them explicitly. No-op when Faro is off.
+    try {
+      faro.api?.pushError(error);
+    } catch {
+      console.error(error);
+    }
   }, [error]);
 
   return (

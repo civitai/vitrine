@@ -1,0 +1,107 @@
+{
+  "uid": "vitrine-frontend",
+  "title": "vitrine · Frontend (Faro)",
+  "tags": ["vitrine", "faro", "frontend"],
+  "schemaVersion": 39,
+  "version": 0,
+  "editable": true,
+  "time": { "from": "now-3h", "to": "now" },
+  "refresh": "30s",
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Exceptions (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`exception` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Sessions (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "count(count by (session_id) (count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | session_id!=`` [$__range])))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "RUM events (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "CLS p75 (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": { "defaults": { "decimals": 3, "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 0.1 }, { "color": "red", "value": 0.25 }] } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "quantile_over_time(0.75, {service_name=\"unknown_service\"} | logfmt | kind=`measurement` | unwrap value_cls [$__range])", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Exceptions over time",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "fillOpacity": 40 }, "color": { "mode": "fixed", "fixedColor": "red" } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`exception` [$__auto]))", "queryType": "range", "legendFormat": "exceptions" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Top errors (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "options": { "showHeader": true },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum by (type, value) (count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`exception` [$__range]))", "queryType": "instant", "format": "table" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Web vitals p75 (ms)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "quantile_over_time(0.75, {service_name=\"unknown_service\"} | logfmt | kind=`measurement` | unwrap value_lcp [$__auto])", "queryType": "range", "legendFormat": "LCP" },
+        { "refId": "B", "datasource": { "type": "loki", "uid": "loki" }, "expr": "quantile_over_time(0.75, {service_name=\"unknown_service\"} | logfmt | kind=`measurement` | unwrap value_inp [$__auto])", "queryType": "range", "legendFormat": "INP" },
+        { "refId": "C", "datasource": { "type": "loki", "uid": "loki" }, "expr": "quantile_over_time(0.75, {service_name=\"unknown_service\"} | logfmt | kind=`measurement` | unwrap value_fcp [$__auto])", "queryType": "range", "legendFormat": "FCP" },
+        { "refId": "D", "datasource": { "type": "loki", "uid": "loki" }, "expr": "quantile_over_time(0.75, {service_name=\"unknown_service\"} | logfmt | kind=`measurement` | unwrap value_ttfb [$__auto])", "queryType": "range", "legendFormat": "TTFB" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "RUM events over time",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "fillOpacity": 40 } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` [$__auto]))", "queryType": "range", "legendFormat": "events" }
+      ]
+    }
+  ]
+}

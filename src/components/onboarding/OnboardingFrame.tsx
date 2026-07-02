@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Wordmark } from '@/components/shell';
+import { track } from '@/lib/analytics';
 import { ONBOARDING_STEPS, type OnboardingStep } from './steps';
 import { useOnboardingKeyboardNav } from './useOnboardingKeyboardNav';
 
@@ -21,6 +22,10 @@ export function OnboardingFrame({ step, children, suppressKeyboardNav }: Props) 
   useOnboardingKeyboardNav(suppressKeyboardNav ? null : step);
   const stepIndex = ONBOARDING_STEPS.indexOf(step);
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    track('onboarding_step_viewed', { step });
+  }, [step]);
 
   async function signOut() {
     setSigningOut(true);

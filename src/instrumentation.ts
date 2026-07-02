@@ -8,6 +8,11 @@ declare global {
  * gated on MOCK_CIVITAI=1 so prod/dev paths are unaffected.
  */
 export async function register(): Promise<void> {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { startOtel } = await import('./lib/otel');
+    startOtel();
+  }
+
   if (process.env.MOCK_CIVITAI !== '1') return;
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
   // The e2e test server preloads MSW before Next boots (scripts/msw-preload.cjs)

@@ -33,6 +33,7 @@ import {
   type PreviewBrief,
   useCampaignPreview,
 } from '@/hooks/useCampaignPreview';
+import { track } from '@/lib/analytics';
 import { buzzTopUpUrl } from '@/lib/links';
 import type { EnhancedPrompt } from '@/lib/promptBuilder';
 import { PresetGrid } from './PresetGrid';
@@ -358,6 +359,10 @@ export function CampaignWizard({ initial, fetcher }: Props) {
         goToStep('brief');
         return;
       }
+      track('campaign_cook_submitted', {
+        tiles: presetIds.length * variantsPerPreset,
+        preset: presetIds.join(','),
+      });
       router.replace(`/campaigns/${json.campaignId}`);
       router.refresh();
     } catch (err) {

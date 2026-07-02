@@ -6,6 +6,7 @@ import { getOnboarding } from '@/lib/onboarding';
 import { getSession } from '@/lib/session';
 import { shellUserFromMe } from '@/lib/user';
 import { getUserKey } from '@/lib/userKey';
+import { FaroIdentity } from '@/components/FaroIdentity';
 import { RouteTransition } from '@/components/shell/RouteTransition';
 import { SessionKeepAlive } from '@/components/shell/SessionKeepAlive';
 import { AppShellProvider } from './AppShellContext';
@@ -36,6 +37,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <AppShellProvider buzzBalance={buzzBalance} user={user}>
+      <FaroIdentity userKey={userKey} />
       <SessionKeepAlive />
       <RouteTransition>{children}</RouteTransition>
     </AppShellProvider>

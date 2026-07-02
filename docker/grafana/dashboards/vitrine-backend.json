@@ -1,0 +1,95 @@
+{
+  "uid": "vitrine-backend",
+  "title": "vitrine · Backend (OTel / Tempo)",
+  "tags": ["vitrine", "otel", "backend", "tempo"],
+  "schemaVersion": 39,
+  "version": 0,
+  "editable": true,
+  "time": { "from": "now-3h", "to": "now" },
+  "refresh": "30s",
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Request rate (req/s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2 } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"vitrine\"}[$__rate_interval]))" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error rate (%)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 1, "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 5 }] } } },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "100 * sum(rate(traces_spanmetrics_calls_total{service=\"vitrine\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])) / clamp_min(sum(rate(traces_spanmetrics_calls_total{service=\"vitrine\"}[$__rate_interval])), 0.0001)" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "p95 latency (all routes)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 0 } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{service=\"vitrine\"}[$__rate_interval])))" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Error spans (range)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"vitrine\", status_code=\"STATUS_CODE_ERROR\"}[$__range]))" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Calls by route (req/s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "sum by (span_name) (rate(traces_spanmetrics_calls_total{service=\"vitrine\"}[$__rate_interval]))", "legendFormat": "{{span_name}}" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "p95 latency by route",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }, "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=\"vitrine\"}[$__rate_interval])))", "legendFormat": "{{span_name}}" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Recent traces",
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 13 },
+      "options": { "showHeader": true },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "tempo", "uid": "tempo" }, "queryType": "traceql", "query": "{ resource.service.name = \"vitrine\" }", "limit": 50, "tableType": "traces" }
+      ]
+    }
+  ]
+}

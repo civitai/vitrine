@@ -4,6 +4,7 @@ import { Download, MoreVertical, Pencil, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Spinner } from '@/components/ui';
+import { track } from '@/lib/analytics';
 import type { CampaignTile } from '@/lib/campaigns';
 import { AD_STACK_COUNT, isStackedPreset, PRESETS, stackedAspectRatio } from '@/lib/presets';
 import type { CreativeGroup } from './creativeGroups';
@@ -72,6 +73,7 @@ function VariantThumb({ campaignId, tile }: { campaignId: string; tile: Campaign
         setError(null);
         setStatus('cooking');
         setWorkflowId(data.workflowId);
+        track('tile_regenerated', { tileId: tile.id });
       }
     } finally {
       setRegenerating(false);

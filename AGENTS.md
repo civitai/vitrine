@@ -17,6 +17,7 @@ isolated test database.
 - S3-compatible object storage (MinIO local, R2 prod) — required for the asset uploader
 - Encrypted-cookie sessions (no token storage in DB)
 - MSW node interceptor for e2e (`src/instrumentation.ts`, gated on `MOCK_CIVITAI=1`)
+- Faro (frontend) + OTel (backend) telemetry, env-gated — local Grafana stack (`lgtm` + `alloy` in `docker-compose.yml`) via `pnpm dev:up`, Grafana UI at http://localhost:3001 (admin/admin)
 
 ## File layout
 
@@ -98,6 +99,24 @@ src/
 
 **Civitai ad formats are campaign output-format presets**, not a separate feature. They live in `src/lib/presets.ts` alongside `social` presets, tagged `platform: 'civitai-ads'` with `exact: true` and an explicit `aspectRatio` (the nearest of `1:1`/`4:5`/`9:16`/`16:9`). The wizard picker (`PresetGrid`) groups presets by `platform`, so ad sizes show under a "civitai ads" section next to "social". Cooking an ad preset goes through the normal campaign flow (`POST /api/campaigns/cook`), generating at its nearest ratio with `resolution: '2K'`. The exact-pixel deliverable is produced by a server-side `sharp` center-crop — `cropToExactPng` in `src/lib/adExport.ts` — wired into the campaign ZIP export (`GET /api/campaigns/[id]/export`) and the per-creative download (`GET /api/campaigns/[id]/tiles/[tileId]/download`). (The `generation_source` enum still carries a now-unused `ad_campaign` value — Postgres can't drop enum values — but the enum count is unchanged at 8.)
 
+## Local observability
+
+The `docker-compose.yml` "Observability" services (`lgtm` + `alloy`) run a
+local Grafana/Loki/Tempo stack that mirrors prod telemetry. Pipeline-only
+check (receivers up, a synthetic event reaches Loki — no app involved):
+`pnpm dev:up` then `bash scripts/obs-smoke.sh`.
+
+To see **real app telemetry** end to end:
+1. Set `NEXT_PUBLIC_FARO_URL` and `OTEL_EXPORTER_OTLP_ENDPOINT` in `.env`.
+2. `pnpm dev`, then trigger an action (cook a campaign, hit an error route).
+3. Grafana Explore (http://localhost:3001): **Loki** for Faro browser
+   events/errors (Alloy doesn't map Faro's `meta.app.name` to a stream
+   label, so select `{service_name="unknown_service"}` and filter by line
+   content, e.g. `app_name=vitrine`), **Tempo** (service `vitrine`) for the
+   browser→backend trace.
+4. Session replay is prod-only gated — needs `pnpm build && pnpm start`,
+   not `pnpm dev`.
+
 ## Verifying changes
 
 | You touched | Run |
@@ -107,5 +126,6 @@ src/
 | Schema (`src/lib/db/schema.ts`) | `pnpm db:generate` → review SQL → `pnpm db:migrate` (and `pnpm test:db:setup` to keep `vitrine_test` in sync) |
 | Auth flow (`src/app/api/auth/**`, `lib/session.ts`) | `pnpm test:e2e` (the suite includes the real-OAuth `00-auth-flow` spec) |
 | Cook / regenerate / workflow polling | `pnpm test:e2e` (50-campaigns, 60-photoshoot specs cook against MSW-mocked orchestrator) |
+| Observability stack (`docker/alloy/`, `scripts/obs-smoke.sh`) | `bash scripts/obs-smoke.sh` against the running stack (`pnpm dev:up`) |
 
 `pnpm test:e2e` needs a Civitai dev server with `testing-login` enabled and an OAuth app whose redirect URIs include both `http://localhost:3333/api/auth/callback/civitai` (dev) and `http://localhost:3334/...` (e2e). See [README › End-to-end tests](./README.md#end-to-end-tests) for the full prereqs.

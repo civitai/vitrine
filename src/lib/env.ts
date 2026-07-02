@@ -43,6 +43,9 @@ export const env = createEnv({
      */
     OPENROUTER_MODELS: z.string().optional(),
     OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
+    // --- Observability (Grafana Alloy / OTel) — optional; unset = telemetry off ---
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+    OTEL_TRACES_SAMPLER_ARG: z.string().default('0.25'),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -50,6 +53,11 @@ export const env = createEnv({
     // server (OAuth/API base) and the client ("top up" buzz CTAs), so it lives
     // in the client block — t3-env exposes client vars to server code too.
     NEXT_PUBLIC_CIVITAI_BASE_URL: z.string().url().default('https://civitai.com'),
+    // Grafana Alloy Faro receiver endpoint. Unset → Faro is a no-op.
+    NEXT_PUBLIC_FARO_URL: z.string().url().optional(),
+    NEXT_PUBLIC_FARO_APP_NAME: z.string().default('vitrine'),
+    // Git sha — release + source-map correlation in Faro/Tempo.
+    NEXT_PUBLIC_APP_VERSION: z.string().optional(),
   },
   runtimeEnv: {
     CIVITAI_CLIENT_ID: process.env.CIVITAI_CLIENT_ID,
@@ -69,6 +77,11 @@ export const env = createEnv({
     OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
     OPENROUTER_MODELS: process.env.OPENROUTER_MODELS,
     OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
+    OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+    OTEL_TRACES_SAMPLER_ARG: process.env.OTEL_TRACES_SAMPLER_ARG,
+    NEXT_PUBLIC_FARO_URL: process.env.NEXT_PUBLIC_FARO_URL,
+    NEXT_PUBLIC_FARO_APP_NAME: process.env.NEXT_PUBLIC_FARO_APP_NAME,
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,
   },
   emptyStringAsUndefined: true,
   // CI runs `next build` without real env. Setting SKIP_ENV_VALIDATION=1 in

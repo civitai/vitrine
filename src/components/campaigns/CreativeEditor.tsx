@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Button, FieldLabel, Input, Textarea, useToast } from '@/components/ui';
+import { track } from '@/lib/analytics';
 import { AD_STACK_COUNT, isStackedPreset, PRESETS, stackedAspectRatio } from '@/lib/presets';
 import type { CampaignTile } from '@/lib/campaigns';
 import type { TileVersionEntry } from '@/lib/tileVersions';
@@ -257,6 +258,10 @@ export function CreativeEditor({
         expectedWorkflowRef.current = data.workflowId;
         setWorkflowId(data.workflowId);
       }
+      // Only the dedicated "regenerate · new variation" action counts as a
+      // regenerate for analytics — `save` and `fix layout` route through the
+      // same endpoint but are distinct user intents.
+      if (kind === 'regen') track('tile_regenerated', { tileId: tile.id });
       router.refresh();
     } catch (err) {
       setStatus('done');

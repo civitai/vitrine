@@ -1,0 +1,102 @@
+{
+  "uid": "vitrine-funnel",
+  "title": "vitrine · Product funnel",
+  "tags": ["vitrine", "faro", "analytics"],
+  "schemaVersion": 39,
+  "version": 0,
+  "editable": true,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "Funnel — event counts (range)",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum by (event_name) (count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` [$__range]))", "queryType": "instant", "legendFormat": "{{event_name}}" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Events by name over time",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "stacking": { "mode": "normal" } } } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum by (event_name) (count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` [$__auto]))", "queryType": "range", "legendFormat": "{{event_name}}" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "1 · login_succeeded",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 9 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | event_name=`login_succeeded` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "2 · onboarding_completed",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 9 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | event_name=`onboarding_completed` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "3 · brand_dna_saved",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 9 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | event_name=`brand_dna_saved` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "4 · campaign_cook_submitted",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 9 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | event_name=`campaign_cook_submitted` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "5 · campaign_exported",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 9 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | event_name=`campaign_exported` [$__range]))", "queryType": "instant" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "photoshoot_cook_submitted",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 9 },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "loki", "uid": "loki" }, "expr": "sum(count_over_time({service_name=\"unknown_service\"} | logfmt | kind=`event` | event_name=`photoshoot_cook_submitted` [$__range]))", "queryType": "instant" }
+      ]
+    }
+  ]
+}
