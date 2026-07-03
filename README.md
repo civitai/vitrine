@@ -191,6 +191,27 @@ The test DB is **persistent**: `globalSetup` truncates all tables on entry (a cl
 
 ## Deploying
 
+### Production — Civitai cluster (Tekton + FluxCD)
+
+Production runs on the Civitai Talos cluster at **`vitrine.civitai.com`**, image **`ghcr.io/civitai/vitrine`**. Builds are **tag-driven** through Tekton — the GitHub Actions workflow is a manual fallback only.
+
+```bash
+git tag vX.Y.Z && git push --tags
+```
+
+Flow:
+
+1. `git push --tags` → Flux `GitRepository` (semver ref) picks up the new tag.
+2. Tekton `build-and-push` builds the Docker image and pushes `ghcr.io/civitai/vitrine:<14-digit-ts>-<shortsha>`, baking the `NEXT_PUBLIC_*` build-args (`NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_FARO_URL=https://vitrine.civitai.com/faro`, `NEXT_PUBLIC_APP_VERSION`, `S3_ENDPOINT`, `S3_PUBLIC_URL`).
+3. Flux `ImagePolicy` selects the newest ts-sha tag and commits the bump.
+4. Flux applies → rollout to `vitrine.civitai.com`.
+
+Server env (OAuth creds, `DATABASE_URL`, `S3_*`, `FARO_COLLECTOR_URL`) is injected at runtime by the deployment (talos-infra); only `NEXT_PUBLIC_*` is needed at build time. Browser RUM posts to the same-origin **`/faro`** route, which proxies to the in-cluster Alloy Faro receiver (`FARO_COLLECTOR_URL`).
+
+**Manual fallback:** the `Build & publish Docker image (manual fallback)` GitHub Action (`workflow_dispatch`) publishes the same image + tags — use only during cutover if Tekton is unavailable.
+
+### Vercel (legacy / preview)
+
 Vercel-ready. Set `CIVITAI_CLIENT_ID`, `CIVITAI_CLIENT_SECRET`, `SESSION_SECRET`, `NEXT_PUBLIC_APP_URL`, `DATABASE_URL` (Vercel Postgres / Neon), `S3_ENDPOINT` + `S3_ACCESS_KEY_ID` + `S3_SECRET_ACCESS_KEY` + `S3_BUCKET_*` + `S3_PUBLIC_URL` (R2), and register the prod redirect URI on the OAuth App.
 
 ## Useful scripts

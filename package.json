@@ -20,12 +20,11 @@
     "ai",
     "generation"
   ],
-  "homepage": "https://github.com/civitai/civitai-app-starters/tree/main/starters/next-app#readme",
-  "bugs": "https://github.com/civitai/civitai-app-starters/issues",
+  "homepage": "https://github.com/civitai/vitrine#readme",
+  "bugs": "https://github.com/civitai/vitrine/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/civitai/civitai-app-starters.git",
-    "directory": "starters/next-app"
+    "url": "git+https://github.com/civitai/vitrine.git"
   },
   "scripts": {
     "dev": "next dev -p 3333",
