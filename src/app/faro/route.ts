@@ -25,8 +25,23 @@ export const runtime = 'nodejs';
 
 const COLLECTOR_URL = env.FARO_COLLECTOR_URL;
 
+// Reject oversized bodies before buffering. This route is unauthenticated by
+// design (a browser beacon can't carry a secret), so cap the payload to bound
+// the memory a hostile client can force us to buffer + amplify into in-cluster
+// Alloy. Session-replay batches are the largest legitimate payload and stay
+// well under this ceiling.
+const MAX_BODY_BYTES = 4 * 1024 * 1024;
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const declaredLength = Number(req.headers.get('content-length'));
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   const body = await req.arrayBuffer();
+  if (body.byteLength > MAX_BODY_BYTES) {
+    return new NextResponse(null, { status: 204 });
+  }
   const contentType = req.headers.get('content-type') ?? 'application/json';
 
   try {
@@ -38,6 +53,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // request open. RUM delivery is best-effort.
       signal: AbortSignal.timeout(5000),
     });
+    // Drain the (empty) upstream body so undici returns the socket to the pool
+    // immediately instead of holding it until a GC finalizer runs — this route
+    // is on the per-page-view hot path.
+    upstream.body?.cancel().catch(() => {});
     // Mirror the upstream status on success so the SDK can react to 4xx/5xx if
     // it wants; a 2xx passes straight through.
     return new NextResponse(null, { status: upstream.status });

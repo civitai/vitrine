@@ -63,6 +63,19 @@ describe('POST /faro', () => {
     expect(res.status).toBe(502);
   });
 
+  it('rejects an oversized body (Content-Length over cap) with 204 and never forwards', async () => {
+    const oversized = new Request('http://localhost/faro', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': String(8 * 1024 * 1024) },
+      body: '{}',
+    }) as unknown as NextRequest;
+
+    const res = await POST(oversized);
+
+    expect(res.status).toBe(204);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('returns 204 (never errors) when the collector is unreachable', async () => {
     fetchMock.mockRejectedValue(new Error('ECONNREFUSED'));
 

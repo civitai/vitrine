@@ -67,6 +67,9 @@ const csp = [
   `default-src 'self'`,
   `img-src 'self' data: blob: ${[...CIVITAI_HOSTS, ...STORAGE_HOSTS].join(' ')}`,
   `script-src 'self' 'unsafe-inline' 'unsafe-eval'`,
+  // Faro session replay (rrweb) can serialize/compress in a blob: worker;
+  // without this it falls back to default-src 'self' and the worker is blocked.
+  `worker-src 'self' blob:`,
   `style-src 'self' 'unsafe-inline' ${GOOGLE_FONTS[0]}`,
   `font-src 'self' data: ${GOOGLE_FONTS[1]}`,
   `connect-src 'self' ${[...CIVITAI_HOSTS, ...STORAGE_HOSTS, ...FARO_HOSTS].join(' ')}`,
