@@ -210,6 +210,10 @@ Server env (OAuth creds, `DATABASE_URL`, `S3_*`, `FARO_COLLECTOR_URL`) is inject
 
 **Manual fallback:** the `Build & publish Docker image (manual fallback)` GitHub Action (`workflow_dispatch`) publishes the same image + tags — use only during cutover if Tekton is unavailable.
 
+### Releasing
+
+Cutting a release is a one-liner — `pnpm release:patch` (or `release:minor` / `release:major`) bumps `package.json`, commits it as `chore(release): vX.Y.Z`, creates the annotated `vX.Y.Z` tag, and pushes the branch + tag to `origin/main`. That pushed tag is what drives the Tekton + Flux flow above — Tekton builds `ghcr.io/civitai/vitrine` and Flux rolls it out to `vitrine.civitai.com`. The script preflights first (clean tree, on `main`, in sync with `origin/main`, tag not already taken) and refuses to release otherwise; add `--dry-run` (e.g. `pnpm release:minor --dry-run`) to print the planned version + tag without touching git.
+
 ### Vercel (legacy / preview)
 
 Vercel-ready. Set `CIVITAI_CLIENT_ID`, `CIVITAI_CLIENT_SECRET`, `SESSION_SECRET`, `NEXT_PUBLIC_APP_URL`, `DATABASE_URL` (Vercel Postgres / Neon), `S3_ENDPOINT` + `S3_ACCESS_KEY_ID` + `S3_SECRET_ACCESS_KEY` + `S3_BUCKET_*` + `S3_PUBLIC_URL` (R2), and register the prod redirect URI on the OAuth App.
@@ -227,6 +231,7 @@ Vercel-ready. Set `CIVITAI_CLIENT_ID`, `CIVITAI_CLIENT_SECRET`, `SESSION_SECRET`
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm lint` | ESLint (Next config) |
 | `pnpm check:env` | Validate `.env` against the Zod schema |
+| `pnpm release[:patch\|:minor\|:major]` | Bump version, tag `vX.Y.Z`, push → Tekton build + Flux deploy (`--dry-run` to preview) |
 | `pnpm test:db:setup` | Create + migrate `vitrine_test` |
 | `pnpm test:server` | Boot the e2e Next dev server (port 3334, MSW on, test DB) |
 | `pnpm test:e2e` | Playwright suite (auto-boots `test:server`) |
