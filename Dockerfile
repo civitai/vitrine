@@ -29,8 +29,14 @@ ENV NEXT_PUBLIC_FARO_URL=$NEXT_PUBLIC_FARO_URL
 ARG NEXT_PUBLIC_FARO_APP_NAME=vitrine
 ENV NEXT_PUBLIC_FARO_APP_NAME=$NEXT_PUBLIC_FARO_APP_NAME
 # Release identifier for Faro/Tempo correlation + source-map versioning. The
-# build pipeline should pass the git short-sha or image tag; defaults to `dev`.
-ARG NEXT_PUBLIC_APP_VERSION=dev
+# Faro release version. Precedence: an explicit NEXT_PUBLIC_APP_VERSION build-arg
+# (GitHub Actions passes the ts-sha) wins; otherwise fall back to SOURCE_COMMIT,
+# which the DataPacket Tekton buildkit step injects on every build from the git
+# commit sha (the tekton PipelineTrigger can't template a value into the
+# space-joined BUILD_ARGS string, so it can't set NEXT_PUBLIC_APP_VERSION
+# directly). Defaults to `dev` for local/offline builds.
+ARG SOURCE_COMMIT
+ARG NEXT_PUBLIC_APP_VERSION=${SOURCE_COMMIT:-dev}
 ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 
 # S3_ENDPOINT / S3_PUBLIC_URL are read at BUILD time by next.config.mjs, which
