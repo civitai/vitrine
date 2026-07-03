@@ -46,6 +46,14 @@ export const env = createEnv({
     // --- Observability (Grafana Alloy / OTel) — optional; unset = telemetry off ---
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
     OTEL_TRACES_SAMPLER_ARG: z.string().default('0.25'),
+    // Server-side target the same-origin `/faro` route proxies browser RUM to.
+    // The cluster's Alloy Faro receiver is in-cluster only, so the browser
+    // posts to `https://vitrine.civitai.com/faro` (NEXT_PUBLIC_FARO_URL) and
+    // this route forwards to the receiver below (stamps service_name=vitrine).
+    FARO_COLLECTOR_URL: z
+      .string()
+      .url()
+      .default('http://alloy.monitoring.svc.cluster.local:12348/collect'),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -79,6 +87,7 @@ export const env = createEnv({
     OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
     OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
     OTEL_TRACES_SAMPLER_ARG: process.env.OTEL_TRACES_SAMPLER_ARG,
+    FARO_COLLECTOR_URL: process.env.FARO_COLLECTOR_URL,
     NEXT_PUBLIC_FARO_URL: process.env.NEXT_PUBLIC_FARO_URL,
     NEXT_PUBLIC_FARO_APP_NAME: process.env.NEXT_PUBLIC_FARO_APP_NAME,
     NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,

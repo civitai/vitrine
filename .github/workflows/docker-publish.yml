@@ -1,16 +1,20 @@
-name: Build & publish Docker image
+name: Build & publish Docker image (manual fallback)
 
-# On push to main, builds and pushes ghcr.io/<owner>/vitrine with tags
-# `<14-digit-ts>-<shortsha>` + `latest` using the default GITHUB_TOKEN (no
-# secrets to configure). FluxCD on the Civitai cluster watches the ts-sha tag
-# stream and auto-deploys to vitrine.civitai.com (talos-infra).
+# MANUAL FALLBACK ONLY. The primary build path is now Tekton on the Civitai
+# cluster: push a semver tag (`git tag vX.Y.Z && git push --tags`) → Flux
+# GitRepository (semver) → Tekton `build-and-push` → ghcr.io/civitai/vitrine:
+# `<14-digit-ts>-<shortsha>` → Flux ImagePolicy → rollout to vitrine.civitai.com.
+#
+# This workflow is retained as an escape hatch during the transfer/cutover to
+# github.com/civitai/vitrine (e.g. if Tekton is unavailable). It only runs on
+# manual dispatch — the automatic push-to-main trigger has been removed so it
+# doesn't race Tekton. Builds + pushes ghcr.io/<owner>/vitrine with tags
+# `<14-digit-ts>-<shortsha>` + `latest` using the default GITHUB_TOKEN.
 #
 # NOTE: after the first publish, flip the GHCR package visibility to PUBLIC
 # (package settings) — the cluster pulls without credentials.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -50,6 +54,9 @@ jobs:
             NEXT_PUBLIC_APP_URL=https://vitrine.civitai.com
             S3_ENDPOINT=https://s3.us-west-004.backblazeb2.com
             S3_PUBLIC_URL=https://s3.us-west-004.backblazeb2.com
+            NEXT_PUBLIC_FARO_URL=https://vitrine.civitai.com/faro
+            NEXT_PUBLIC_FARO_APP_NAME=vitrine
+            NEXT_PUBLIC_APP_VERSION=${{ steps.tag.outputs.tag }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/vitrine:${{ steps.tag.outputs.tag }}
             ghcr.io/${{ github.repository_owner }}/vitrine:latest

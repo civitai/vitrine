@@ -18,6 +18,21 @@ RUN pnpm install --frozen-lockfile
 ARG NEXT_PUBLIC_APP_URL=https://vitrine.civitai.com
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
+# Faro RUM is gated on NEXT_PUBLIC_FARO_URL being baked into the bundle. It
+# points at THIS app's same-origin /faro proxy route (the cluster Alloy Faro
+# receiver is in-cluster only) — the route forwards to it server-side. Must be
+# a build-arg because NEXT_PUBLIC_* is inlined at `next build`, not read at
+# runtime. Setting it here also flips on productionBrowserSourceMaps
+# (next.config.mjs) so Faro can symbolicate stack traces.
+ARG NEXT_PUBLIC_FARO_URL=https://vitrine.civitai.com/faro
+ENV NEXT_PUBLIC_FARO_URL=$NEXT_PUBLIC_FARO_URL
+ARG NEXT_PUBLIC_FARO_APP_NAME=vitrine
+ENV NEXT_PUBLIC_FARO_APP_NAME=$NEXT_PUBLIC_FARO_APP_NAME
+# Release identifier for Faro/Tempo correlation + source-map versioning. The
+# build pipeline should pass the git short-sha or image tag; defaults to `dev`.
+ARG NEXT_PUBLIC_APP_VERSION=dev
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
+
 # S3_ENDPOINT / S3_PUBLIC_URL are read at BUILD time by next.config.mjs, which
 # folds their origins into the CSP connect-src (browser presigned PUT) and
 # img-src (uploaded-asset <img>). They must be present during `next build` or
