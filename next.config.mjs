@@ -115,6 +115,9 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   images: {
+    // Nothing renders next/image, so turn the /_next/image optimizer off: it is
+    // an unauthenticated endpoint that decodes remote images (GHSA-2xp9 class).
+    unoptimized: true,
     // The orchestrator returns blob URLs on its CDN. Allow them as image sources.
     remotePatterns: [
       { protocol: 'https', hostname: '*.civitai.com' },

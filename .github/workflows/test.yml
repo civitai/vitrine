@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.60 has no chromium for ubuntu 26.04 (ubuntu-latest)
     services:
       postgres:
         image: postgres:16
